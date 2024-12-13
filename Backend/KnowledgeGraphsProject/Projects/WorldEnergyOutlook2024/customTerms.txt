@@ -1,0 +1,242 @@
+custom_terms = [
+    {
+        "label": "nonRenewableSource",
+        "pattern": "coal"
+    },
+    {
+        "label": "nonRenewableSource",
+        "pattern": "oil"
+    },
+    {
+        "label": "nonRenewableSource",
+        "pattern": "crude oil"
+    },
+    {
+        "label": "nonRenewableSource",
+        "pattern": "gas"
+    },
+    {
+        "label": "nonRenewableSource",
+        "pattern": "nuclear "
+    },
+    {
+        "label": "nonRenewableSource",
+        "pattern": "fossil"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "solar"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "wind"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "hydropower"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "geothermal"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "biomass"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "tidal"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "wave"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "ocean"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "hydrogen"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "renewable energy"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "offshore wind"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "photovoltaic"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "hydroelectric plant"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "nuclear power plant"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "solar power plant"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "wind farm"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "geothermal power plant"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "biomass power plant"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "tidal power plant"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "wave energy plant"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "offshore wind farm"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "coal-fired power plant"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "natural gas power plant"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "photovoltaic power station"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "waste-to-energy plant"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "ocean thermal energy conversion plant"
+    },
+    {
+        "label": "nonRenewableEnergyPlant",
+        "pattern": "oil refinery"
+    },
+    {
+        "label": "nonRenewableEnergyPlant",
+        "pattern": "fossil fuel power plant"
+    },
+    {
+        "label": "emissions",
+        "pattern": "emissions"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "clean energy"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "greenhouse"
+    },
+    {
+        "label": "renewableSource",
+        "pattern": "solar pv"
+    },
+    {
+        "label": "sustainableGoals",
+        "pattern": "emissions reductions"
+    },
+    {
+        "label": "emissions",
+        "pattern": "greenhouse gas emissions"
+    },
+    {
+        "label": "emissions",
+        "pattern": "emissions intensity"
+    },
+    {
+        "label": "energyTrade",
+        "pattern": "gas exports"
+    },
+    {
+        "label": "energyCapacity",
+        "pattern": "crude oil production capacity"
+    },
+    {
+        "label": "sustainableGoals",
+        "pattern": "co2 emissions reductions"
+    },
+    {
+        "label": "sustainableGoals",
+        "pattern": "emissions targets"
+    },
+    {
+        "label": "sustainableGoals",
+        "pattern": "emissions pledges"
+    },
+    {
+        "label": "energyProjects",
+        "pattern": "co2 project"
+    },
+    {
+        "label": "energyPlant",
+        "pattern": "CO2 hub"
+    },
+    {
+        "label": "mineralResources ",
+        "pattern": "cobalt"
+    },
+    {
+        "label": "mineralResources",
+        "pattern": "mineral resources"
+    },
+    {
+        "label": "energyProduction",
+        "pattern": "electricity sources"
+    },
+    {
+        "label": "emissions",
+        "pattern": "emissions electricity sources"
+    },
+    {
+        "label": "GECscenarios",
+        "pattern": "Stated Policies Scenario"
+    },
+    {
+        "label": "GECscenarios",
+        "pattern": "Announced Pledges Scenario"
+    },
+    {
+        "label": "GECscenarios",
+        "pattern": "APS"
+    },
+    {
+        "label": "GECscenarios",
+        "pattern": "Net Zero Emissions by 2050 Scenario"
+    },
+    {
+        "label": "GECscenarios",
+        "pattern": "NZE Scenario"
+    },
+    {
+        "label": "GECscenarios",
+        "pattern": "STEPS"
+    },
+    {
+        "label": "marketDynamics",
+        "pattern": "emerging market"
+    },
+    {
+        "label": "energyDemand",
+        "pattern": "demand for energy"
+    }
+]
