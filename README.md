@@ -33,6 +33,6 @@ The project is designed to be adaptable to any topic. In our case, we have chose
 
 ---
 
-#### This project has been developed as a coursework assigned for the class "Information Retrieval and Natural Language Processing", Fall 2024 (Instructor: prof. Andrea Tagarelli) at the DIMES Department, University of Calabria, Italy 
+#### This project has been developed as a coursework assigned for the class "Information Retrieval and Natural Language Processing", Fall 2024 (Instructor: prof. [Andrea Tagarelli](https://mlnteam-unical.github.io/)) at the DIMES Department, University of Calabria, Italy 
 
 #### Designed by Francesca Daniele e Marco Leto 
