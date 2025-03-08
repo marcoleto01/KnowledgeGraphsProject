@@ -7,7 +7,7 @@ import nerTool
 import spacy
 import shutil
 
-from NER import relationExtractor, graphBuilder
+from Project import relationExtractor, graphBuilder, graphAnalysis, GPT_Api
 from neo4j import GraphDatabase
 
 app = Flask(__name__)
@@ -19,7 +19,8 @@ uri = "bolt://localhost:7687"
 driver = GraphDatabase.driver(uri, auth=("neo4j", "14052001"))
 session = driver.session()
 
-
+#Define the variable for the GraphAnalysis
+G = graphAnalysis.getGraph()
 
 
 @app.route('/createProject', methods=['POST'])
@@ -514,10 +515,8 @@ def tagText():
     doc = nerTool.remove_leading_articles(doc)
     doc = nerTool.enhance_entities(doc)
 
-
     #Include the entities from the trf model to the doc
     doc = nerTool.include_base_entities(doc, text, nlp)
-
 
     #Save the doc in the folder
     nerTool.saveNerModel(f"Tagging/{fileName}", doc)
@@ -533,7 +532,9 @@ def getRelationsFromProject():
     print(relations)
     return jsonify({"relations": relations})
 
+
 import json
+
 
 @app.route('/buildKnowledgeGraphFromProject', methods=['POST'])
 def buildKnowledgeGraphFromProject():
@@ -544,7 +545,7 @@ def buildKnowledgeGraphFromProject():
     if projectName in databases:
         return jsonify({"status": "error", "message": "Project already exists in the database"}), 400
     session.run(f"CREATE DATABASE {projectName}")
-    project_session=driver.session(database=projectName)
+    project_session = driver.session(database=projectName)
     data = request.json
     array = data.get('doc', [])
     for document in array:
@@ -572,14 +573,15 @@ def processQuery():
     print("Ciao")
     graph_data = graphBuilder.execute_query(session, query)
 
-    print("GraphData:",graph_data)
+    print("GraphData:", graph_data)
 
     if graph_data != None:
         print(graph_data["nodes"])
         print(graph_data["edges"])
-        return jsonify({"nodes": graph_data["nodes"], "edges": graph_data["edges"],"relation_texts": graph_data["relation_texts"]})
+        return jsonify({"nodes": graph_data["nodes"], "edges": graph_data["edges"],
+                        "relation_texts": graph_data["relation_texts"]})
 
-    return jsonify({"nodes": [], "edges": [],"relation_texts": []})
+    return jsonify({"nodes": [], "edges": [], "relation_texts": []})
 
 
 @app.route('/processQueryByForm', methods=['POST'])
@@ -592,7 +594,9 @@ def processQueryByForm():
     print(query)
     session = driver.session(database=projectName)
     graph_data = graphBuilder.execute_query(session, query)
-    return jsonify({"nodes": graph_data["nodes"], "edges": graph_data["edges"],"relation_texts": graph_data["relation_texts"], "query": query, })
+    return jsonify(
+        {"nodes": graph_data["nodes"], "edges": graph_data["edges"], "relation_texts": graph_data["relation_texts"],
+         "query": query, })
 
 
 @app.route('/getQueryChoose', methods=['GET'])
@@ -605,7 +609,6 @@ def get_query_options():
     with open('graphFilesMapping.json', 'r') as file:
         data = json.load(file)
         array = data.get(projectName, [])
-
 
     return_dict = {}
     return_dates = []
@@ -634,12 +637,14 @@ def getGraphProjects():
     databases = [record["name"] for record in result if record["name"] != "system"]
     return jsonify({"projects": databases})
 
+
 @app.route('/removeGraphProject', methods=['DELETE'])
 def removeGraphProject():
     projectName = request.args.get('projectName')
     query = f"DROP DATABASE {projectName}"
     session.run(query)
     return jsonify({"status": "success"})
+
 
 @app.route('/getTaggedTextFiles', methods=['GET'])
 def getTaggedTextFiles():
@@ -656,3 +661,149 @@ def getTaggedTextFiles():
 
     return jsonify({"status": "success", "taggedFiles": tagged_files})
 
+
+@app.route('/getGraphInformation', methods=['GET'])
+def getGraphInformation():
+    info = graphAnalysis.getGraphInformation(G)
+    return jsonify({"status": "success", "data": info})
+
+
+@app.route('/getNodeInformation', methods=['GET'])
+def getNodeInformation():
+    nodeString = request.args.get('nodeText')
+    info = graphAnalysis.getNodeInformation(G, nodeString)
+    return jsonify({"status": "success", "data": info})
+
+
+@app.route('/getGraphInformationByCommunity', methods=['GET'])
+def getGraphInformationByCommunity():
+    community_id = request.args.get('communityId')
+    info = graphAnalysis.getGraphInformationByCommunity(community_id)
+    return jsonify({"status": "success", "data": info})
+
+
+@app.route('/getLouvainCommunities', methods=['GET'])
+def getLouvainCommunities():
+    communities = graphAnalysis.getLouvainCommunities()
+    return jsonify({"status": "success", "data": communities})
+
+
+@app.route('/getLouvainCommunityInfo', methods=['GET'])
+def getLouvainCommunityInfo():
+    community_id = request.args.get('communityId')
+    info = graphAnalysis.getLouvainCommunityInfo(community_id)
+    return jsonify({"status": "success", "data": info})
+
+
+@app.route('/getNodesInfoByGraph', methods=['GET'])
+def getNodesInfoByGraph():
+    community_id = request.args.get('communityId')
+    session = driver.session(database='cleanedgraph2')
+    query = graphAnalysis.getAllCommunityNodesQuery(community_id)
+    print("Query:", query)
+    graph_data = graphBuilder.execute_query_without_text(session, query)
+    print("GraphData:", graph_data)
+    if graph_data != None:
+        return jsonify({"nodes": graph_data["nodes"], "edges": graph_data["edges"]})
+
+    return jsonify({"nodes": [], "edges": [], "relation_texts": []})
+
+
+@app.route('/getAllModels', methods=['GET'])
+def getAllModels():
+    # Return the names of the models in the folder
+    model_list = []
+    for file in os.listdir("GraphAnalysis/energyReportsGraph/Models/"):
+        model_list.append(file)
+
+    return jsonify({"status": "success", "data": model_list})
+
+
+@app.route('/getAllPossibleLinkQueryChoose', methods=['GET'])
+def getAllPossibleLinkQueryChoose():
+    possibleChoose, entity_families = graphAnalysis.getAllPossibleLinkQueryChoose()
+    return jsonify({"status": "success", "possibleChoose": possibleChoose, "entity_families": entity_families})
+
+
+@app.route('/createCustomStrategy', methods=['POST'])
+def createCustomStrategy():
+    #create_new_custom_model(uniformWeight=0.25, hardWeight=0.25, centralityWeight=0.25)
+    global creatingModel
+    creatingModel = True
+    uniformWeight = request.args.get('uniformWeight')
+    hardWeight = request.args.get('hardWeight')
+    centralityWeight = request.args.get('centralityWeight')
+
+    graphAnalysis.create_new_custom_model(uniformWeight, hardWeight, centralityWeight)
+
+    creatingModel = False
+
+    return jsonify({"status": "success"})
+
+
+@app.route('/getCreatingModel', methods=['GET'])
+def getCreatingModel():
+    return jsonify({"status": "success", "data": creatingModel})
+
+
+@app.route('/getNodePrediction', methods=['POST'])
+def getNodePrediction():
+    global searchingLinks
+    model = request.args.get('model')
+    threshold = request.args.get('threshold')
+    body = request.get_json()
+    nodes = body.get('nodes')
+
+    print("Threshold:", threshold)
+    print("Model:", model)
+
+    print(f"Entro in getNodePrediction con model: {model} e nodes: {nodes}")
+    searchingLinks = True
+
+    prediction = graphAnalysis.node_prediction(model, nodes, threshold)
+    #print("Prediction:", prediction)
+    prediction_text = []
+    for relation in prediction:
+        prediction_text.append(relation['relation'])
+    if len(prediction_text) > 0:
+        #Concatenate element in prediction_text until the length is less than 19500
+        prediction_API_input = ""
+        #print("Prediction text:", prediction_text)
+        for element in prediction_text:
+            if len(prediction_API_input) + len(element) < 19500:
+                prediction_API_input += element
+            else:
+                break
+        elaborate_prediction = GPT_Api.elaborate_prediction(prediction_API_input)
+        print("Elaborate prediction:", elaborate_prediction)
+    else:
+        elaborate_prediction = ""
+    #elaborate_prediction = GPT_Api.elaborate_prediction(prediction)
+    searchingLinks = False
+
+    return jsonify({"status": "success", "data": prediction, "elaborate_prediction": elaborate_prediction})
+
+
+@app.route('/getSearchingLinks', methods=['GET'])
+def getSearchingLinks():
+    return jsonify({"status": "success", "data": searchingLinks})
+
+
+#Variable to check when a model is ready
+creatingModel = False
+
+#Searching link
+searchingLinks = False
+
+
+@app.route('/getReportByCommunity', methods=['GET'])
+def getReportByCommunity():
+    community_id = request.args.get('communityId')
+    session = driver.session(database='cleanedgraph2')
+    texts = graphAnalysis.getCommunityReport(community_id, session)
+    text_to_chat = ""
+    for text in texts:
+        text_to_chat += text + "\n"
+    print("Text to chat: ",text_to_chat)
+    info = GPT_Api.elaborate_community_report_text(texts)
+    return jsonify({"status": "success", "data": info})
