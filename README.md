@@ -1,5 +1,9 @@
 # Renewable Energy Knowledge Graph: From Extraction to Advanced Analysis 🌱⚡📊
+Starting from PDF documents related to any topic of interest—in this case, renewable energy—this project demonstrates a structured workflow: initially extracting meaningful textual information, transforming it into structured relationships within a Knowledge Graph, and subsequently applying advanced graph analysis techniques such as *Link Prediction*.
 
+By leveraging existing connections within the graph, this predictive approach enables the discovery of intriguing future relationships and interactions among entities, unveiling insights and opportunities that extend beyond current data.
+
+This entire process encapsulates a concise yet powerful methodology for discovering hidden connections, facilitating strategic knowledge discovery, and enhancing decision-making through predictive insights in any domain.
 ### Requirements
 - [Python 3.12](https://www.python.org/downloads/)
 - [spaCy](https://spacy.io/usage)
