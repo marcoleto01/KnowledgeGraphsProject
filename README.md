@@ -5,6 +5,8 @@
 - [spaCy](https://spacy.io/usage)
 - [pdfplumber](https://pypi.org/project/pdfplumber/0.1.2/)
 - [neo4j](https://neo4j.com/)
+- [networkx](https://networkx.org/)
+
 
 ## STEP 1: Renewable Energy Knowledge Graph Builder 🌱⚡
 
