@@ -10,6 +10,7 @@ from torch_geometric.utils import negative_sampling
 import torch.nn.functional as F
 
 
+
 def preprocess_graph_data(data):
     G = nx.Graph()
     edges = set()
@@ -52,6 +53,17 @@ def getLabelsMapping():
     return labels_mapping
 
 
+'''
+Il metodo getGraphInformation prende un grafo G come parametro e calcola le seguenti metriche:
+    - Numero di nodi (num_nodes): il numero totale di nodi nel grafo.
+    - Numero di archi (num_edges): il numero totale di archi nel grafo.
+    - Densita (density): la proporzione di archi presenti rispetto al numero massimo possibile di archi.
+    - Grado medio (avg_degree): il grado medio dei nodi nel grafo.
+    - Coefficiente di clustering medio (avg_clustering): la tendenza dei nodi a formare cluster o gruppi.
+    - Assortativita (assortativity): la tendenza dei nodi con gradi simili a connettersi tra loro.
+    - I 10 nodi con la centralita media piu alta (top_k_centrality): identifica i nodi piu influenti nel grafo calcolando la media delle centralita di grado, betweenness e closeness, restituendo i 10 nodi con il valore medio più alto.
+'''
+
 def getGraphInformation(G):
     node_name_mapping = getNodeNameMapping()
 
@@ -92,6 +104,16 @@ def getGraphInformation(G):
     return info
 
 
+"""
+Recupera le informazioni di un nodo con node "string" specifico nel grafo G e restituisce un dizionario contenente le informazioni del nodo:
+        - "node": Il nome del nodo.
+        - "degree": Il grado del nodo.
+        - "degree_centrality": La centralita di grado del nodo.
+        - "betweenness_centrality": La centralita di betweenness del nodo.
+        - "closeness_centrality": La centralita di closeness del nodo.
+        - "eigenvector_centrality": La centralita di eigenvector del nodo.
+        - "pagerank": Il PageRank del nodo.
+"""
 def getNodeInformation(G, nodeString):
     #Get id b string
     node_mapping = getNodeNameMapping()
@@ -134,6 +156,10 @@ def getNodeInformation(G, nodeString):
 import os
 
 
+'''
+Il seguente metodo restituisce le community louvain ottenute nello studio delle community
+'''
+
 def getLouvainCommunities():
     #Search for .graphml files in the directory GraphAnalysis/energyReportsGraph/louvainCommunities
     louvainCommunities = []
@@ -144,6 +170,9 @@ def getLouvainCommunities():
 
     return louvainCommunities
 
+'''
+Il seguente metodo restituisce il grafo dando in input un possibile id
+'''
 
 def getGraphById(communityId):
     communitieNames = getLouvainCommunities()
@@ -156,6 +185,10 @@ def getGraphById(communityId):
                 G = nx.Graph(G)
             return G
 
+
+'''
+Il seguente metodo restituisce le informazioni del grafo prendendo come input l'id di questo
+'''
 
 def getLouvainCommunityInfo(communityId):
     G = getGraphById(communityId)
@@ -184,13 +217,178 @@ def getGraphInformationByCommunity(communityId):
     G = getGraphById(communityId)
     return getGraphInformation(G)
 
+#--------------- METHODS FOR COMMUNITY REPORT --------------------
+#I seguenti metodi sono utilizzati per estrarre, partendo dalle community, dei sottografi significativi
 
-#Creazione custom Model
+'''
+Il metodo getCommunityReport prende come input l'Id del grafo e la sessione di Neo4j per interrogare il grafo e estra un report testuale della community con il seguente workflow:
+ - calcola i nodi con piu centralità media nella community
+ - calcola dei cammini (non minimi) che passano per top k nodi piu centrali 
+ - salva l'id degli archi dei cammini, assicurandosi di non aggiugere lo stesso arco due volte
+ - estra a partire dagli archi il testo dei file iniziali associato
+'''
 
+def getCommunityReport(graphId, session):
+    G = getGraphById(graphId)
+    print(f"Graph Id: {graphId}")
+
+    #Open json for the data
+    data = json.load(open(f"GraphAnalysis/energyReportsGraph/graph_data.json", "r"))
+
+    degree_centrality = nx.degree_centrality(G)
+    betweenness_centrality = nx.betweenness_centrality(G)
+    closeness_centrality = nx.closeness_centrality(G)
+
+    importance_scores = {node: (degree_centrality[node] + betweenness_centrality[node] + closeness_centrality[node])
+                         for node in G.nodes}
+
+    main_topics = sorted(importance_scores.items(), key=lambda x: x[1], reverse=True)
+
+    top_nodes = [node for node, score in main_topics if score > 0.8]
+
+    print(top_nodes)
+
+    G_copy = G.copy()
+    leaf_nodes = find_leaf_nodes(G_copy)
+
+    results = find_and_remove_paths(G_copy, top_nodes, leaf_nodes)
+
+    connected_top_nodes_paths = results['connected_top_nodes']
+    connected_top_nodes_paths = sorted(connected_top_nodes_paths, key=lambda x: len(x), reverse=True)
+
+    # Remove all the paths from the graph that have a number of top_node less than len(top_nodes)/2
+    new_connected_top_nodes_paths = []
+    for path in connected_top_nodes_paths:
+        n_top_node = 0
+        for node in path:
+            if node in top_nodes:
+                n_top_node += 1
+
+        if n_top_node >= 2:
+            new_connected_top_nodes_paths.append(path)
+
+    print(connected_top_nodes_paths)
+
+    edge_ids = extract_subgraph_info_from_path(data, connected_top_nodes_paths)
+
+    print(edge_ids)
+    texts = get_text_by_edge_ids(session, edge_ids)
+
+    return texts
+
+def find_and_remove_paths(G, top_nodes, leaf_nodes):
+    results = {top: {'edges': [], 'paths_to_leaves': []} for top in top_nodes}
+    results['connected_top_nodes'] = []
+
+    # Fase 1 : estrarre gli archi tra i top_nodes e se stessi
+    for top in top_nodes:
+        results[top]['edges'] = [(u, v) for u, v in G.edges if (u == top and v == top) or (v == top and u == top)]
+
+    # **Fase 2: Collegare i top_nodes tra loro**
+    while True:
+        found = False
+        for i, top1 in enumerate(top_nodes):
+            for j, top2 in enumerate(top_nodes):
+                if i >= j:
+                    continue
+                try:
+                    path = nx.shortest_path(G, source=top1, target=top2)
+                    results['connected_top_nodes'].append(path)
+                    found = True
+                    G.remove_edges_from([(path[i], path[i + 1]) for i in range(len(path) - 1)])
+                except nx.NetworkXNoPath:
+                    continue
+        if not found:
+            break
+
+    return results
+
+
+def find_leaf_nodes(G):
+    if G.is_directed():
+        return [node for node in G.nodes if G.out_degree(node) == 0]
+    else:
+        return [node for node in G.nodes if G.degree(node) == 1]
+
+
+
+def extract_subgraph_info_from_path(data, connected_top_nodes_paths):
+    visited_entry = []
+    # Converti `subgraph_edges` in set per ricerca veloce
+    edge_id_for_path = []
+
+    for path in connected_top_nodes_paths:
+        edges = []
+        for i in range(len(path) - 1):
+            edges.append((path[i], path[i + 1]))
+        id_path = []
+        for edge in edges:
+            for entry in data:
+                nodo1_id = str(entry["nodo1"]["id"])
+                nodo2_id = str(entry["nodo2"]["id"])
+
+                if (edge == (nodo1_id, nodo2_id) or edge == (nodo2_id, nodo1_id)) and entry not in visited_entry:
+                    id_path.append(entry["arco"]["id"])
+                    visited_entry.append(entry)
+                    break
+        if len(id_path) == len(edges):
+            edge_id_for_path.append(id_path)
+
+    return edge_id_for_path
+
+
+def get_relationship_by_id(session, rel_id):
+    query = """
+    MATCH ()-[r]->()
+    WHERE id(r) = $relId
+    RETURN {
+        id: id(r),
+        type: type(r),
+        properties: properties(r),
+        startNode: id(startNode(r)),
+        endNode: id(endNode(r))
+    } AS relationshipInfo
+    """
+
+    result = session.run(query, relId=rel_id)
+    record = result.single()
+    return record["relationshipInfo"] if record else None
+
+
+def get_text_by_edge_ids(session, edge_ids):
+    full_texts = []
+
+    for result in edge_ids:
+        text = ""
+        for edge_id in result:
+            id_dict = get_relationship_by_id(session, edge_id)
+            file_name = id_dict["properties"]["documentName"]
+            sentence_index = id_dict["properties"]["sentencesIndex"]
+            try:
+                path = os.path.join(os.path.dirname(__file__), "..", "newDocFiles", f"{file_name}.json")
+                with open(path, "r") as file:
+                    doc = json.load(file)
+            except FileNotFoundError:
+                print(f"File {file_name} not found.")
+                break
+            text += doc[str(sentence_index)] + " "
+        full_texts.append(text)
+
+    return full_texts
+
+
+
+
+#-------------------- Creazione custom Model --------------------
+#Questi metodi vengono utilizzati per creare ed addestrare i modelli da utilizzare nella link prediction.
 from torch_geometric.nn import GCNConv
 from torch_geometric.nn import GATConv
 from torch_geometric.nn import SAGEConv
 
+
+'''
+Si definiscono le classi delle diverse reti neurali GCN, GAT e GraphSAGE
+'''
 
 class GCN(torch.nn.Module):
     def __init__(self, in_feats, hidden_feats):  # Fix: '__init__' instead of '_init_'
@@ -227,6 +425,9 @@ class GraphSAGE(torch.nn.Module):
         x = self.conv2(x, edge_index)
         return x
 
+'''
+Il metodo create_new_custom_model permette di creare un modello con una configurazione personalizzata dei pesi per il negative sampling
+'''
 
 def create_new_custom_model(uniformWeight, hardWeight, centralityWeight):
     models = {
@@ -270,10 +471,12 @@ def create_new_custom_model(uniformWeight, hardWeight, centralityWeight):
                f"_UW_{uniformWeight.split(".")[1]}HW_{hardWeight.split(".")[1]}_CW_{centralityWeight.split(".")[1]}.pth")
 
 
+'''
+Il metodo create_train_test_edges divide gli archi in training e test set con strategia di sampling configurabile.
+'''
+
 def create_train_test_edges(data, test_ratio=0.1, min_edges=2, neg_sampling_strategy="uniform", strategy_weights=None):
-    """
-    Divide gli archi in training e test set con strategia di sampling configurabile.
-    """
+
     device = data.edge_index.device
     num_edges = data.edge_index.shape[1]
     num_test = max(int(test_ratio * num_edges), min_edges)
@@ -293,9 +496,10 @@ def create_train_test_edges(data, test_ratio=0.1, min_edges=2, neg_sampling_stra
 
     return train_edges.long(), test_edges.long(), neg_edges.long()
 
+"""Il metodo link_predictor effetua il Dot product tra coppie di nodi per predire il link."""
 
 def link_predictor(embeddings, edge_index):
-    """Dot product tra coppie di nodi per predire il link."""
+    
     src, dst = edge_index
     src = src.long()
     dst = dst.long()
@@ -403,15 +607,16 @@ def train_link_prediction(graphs, models, epochs=100, lr=0.01, neg_sampling_stra
 
     return results
 
-
-def advanced_negative_sampling(data, num_neg_samples=None, strategy="hard", strategy_weights=None):
-    """
-    Genera esempi negativi per link prediction con 4 strategie:
+"""
+    Il metodo advanced_negative_sampling genera esempi negativi per link prediction con 4 strategie:
     1. Uniforme (casuale)
     2. Hard Negative (campiona nodi difficili)
     3. Basato su Centralità (sceglie nodi centrali)
     4. Hybrid (combinazione pesata delle tre strategie)
-    """
+"""
+
+def advanced_negative_sampling(data, num_neg_samples=None, strategy="hard", strategy_weights=None):
+ 
     num_nodes = data.x.shape[0]
     G = nx.Graph()
     G.add_edges_from(data.edge_index.t().tolist())
@@ -1038,30 +1243,6 @@ def predict_five_relationship(model, data, input1, input2, input3, input4, input
             print(" Nessuna connessione predetta tra questi nodi.")
             return []
 
-
-    #Caso 12: Categoria - Categoria - Nodo - Categoria - Categoria
-    if is_category1 and is_category2 and is_node3 and is_category4 and is_category5:
-
-        category3 = get_label_for_node(input3, labels_data)
-        node3_id = get_node_id_from_name(input3, entity_mapping, entita_to_node)
-
-        if node3_id is None or category3 is None :
-            print(f" Errore: uno dei nodi non ha un ID o Categoria valido.")
-            return []
-
-        all_predictions = predict_five_links(model, data, input1, input2, category3, input4, input5, labels_data,
-                                             entita_to_node, node_to_category, threshold)
-        filtered_predictions = [
-            (n1, n2, n3, n4, n5, prob) for (n1, n2, n3, n4, n5, prob) in all_predictions
-            if (n3 == node3_id)
-        ]
-
-        if filtered_predictions:
-            return filtered_predictions
-        else:
-            print(" Nessuna connessione predetta tra questi nodi.")
-            return []
-
     # Caso 11: Tutti e cinque sono categorie
     if is_category1 and is_category2 and is_category3 and is_category4 and is_category5:
         return predict_five_links(model, data, input1, input2, input3, input4, input5, labels_data, entita_to_node,
@@ -1387,10 +1568,6 @@ def predict_four_relationship(model, data, input1, input2, input3, input4, label
             print(" Nessuna connessione predetta tra questi due nodi.")
             return []
 
-
-
-
-
     # Caso 7: Tutte categorie
     elif is_category1 and is_category2 and is_category3 and is_category4:
         return predict_four_links(model, data, input1, input2, input3, input4, labels_data,
@@ -1664,7 +1841,7 @@ def predict_indirect_links(model, data, category1, category2, category3, labels_
             (int(c1), int(c2), int(c3), float(pred_probs_1_2[i].cpu() * pred_probs_2_3[j].cpu()))
             for i, (c1, c2) in enumerate(candidate_1_2.cpu().numpy())
             for j, (c2_match, c3) in enumerate(candidate_2_3.cpu().numpy())
-            if c2 == c2_match and float(pred_probs_1_2[i].cpu() * pred_probs_2_3[j].cpu()) > float(threshold)
+            if c2 == c2_match and float(pred_probs_1_2[i].cpu() * pred_probs_2_3[j].cpu()) > threshold
         ]
 
         return indirect_links
