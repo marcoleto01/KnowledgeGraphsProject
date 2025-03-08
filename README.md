@@ -1,15 +1,15 @@
 # Renewable Energy Knowledge Graph: From Extraction to Advanced Analysis 🌱⚡📊
 
-## STEP 1: Renewable Energy Knowledge Graph Builder 🌱⚡
-
-This project enables the construction of a *knowledge graph* from PDF documents. The workflow includes entity and relationship extraction, advanced syntactic analysis, and the construction of graphs that can be visualized using *Neo4j*.
-The project is designed to be adaptable to any topic. In our case, we have chosen the theme of *renewable energy*.
-
 ### Requirements
 - [Python 3.12](https://www.python.org/downloads/)
 - [spaCy](https://spacy.io/usage)
 - [pdfplumber](https://pypi.org/project/pdfplumber/0.1.2/)
 - [neo4j](https://neo4j.com/)
+
+## STEP 1: Renewable Energy Knowledge Graph Builder 🌱⚡
+
+This project enables the construction of a *knowledge graph* from PDF documents. The workflow includes entity and relationship extraction, advanced syntactic analysis, and the construction of graphs that can be visualized using *Neo4j*.
+The project is designed to be adaptable to any topic. In our case, we have chosen the theme of *renewable energy*.
 
 ### Workflow
 ##### 1. PDF Conversion [textExtraction.pynb](textExtraction.ipynb)
