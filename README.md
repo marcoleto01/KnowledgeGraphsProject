@@ -15,7 +15,7 @@ This entire process encapsulates a concise yet powerful methodology for discover
 ## STEP 1: Renewable Energy Knowledge Graph Builder 🌱⚡
 
 This project enables the construction of a *knowledge graph* from PDF documents. The workflow includes entity and relationship extraction, advanced syntactic analysis, and the construction of graphs that can be visualized using *Neo4j*.
-The project is designed to be adaptable to any topic. In our case, we have chosen the theme of *renewable energy*.
+The project is designed to be adaptable to any topic. In our case, we have chosen the theme of **renewable energy**.
 
 ### Workflow
 ##### 1. PDF Conversion [textExtraction.pynb](textExtraction.ipynb)
@@ -44,19 +44,19 @@ The project is designed to be adaptable to any topic. In our case, we have chose
 In this second phase, we focus on further analysis, refinement, and enrichment of the knowledge graph built in Phase 1. The notebooks provided detail critical tasks to ensure quality, usability, and enhanced insights from the graph data.
 
 ### Workflow
-##### 1. Graph Cleaning and Data Creation [GraphCleaningAndDataCreation.ipynb]
+##### 1. Graph Cleaning and Data Creation [GraphCleaningAndDataCreation.ipynb](NER/GraphCleaningAndDataCreation.ipynb)
 
 - Data cleaning and preprocessing steps to refine the knowledge graph.
 - Resolution of inconsistencies and removal of duplicate entities.
 - Standardization and normalization of entity names and relations.
 - Creation of structured datasets to facilitate advanced analytics.
 
-##### 2. Community Extraction and Model Training [CommunityExtractionAndModelTraining.ipynb]
+##### 2. Community Extraction and Model Training [CommunityExtractionAndModelTraining.ipynb](NER/CommunityExtractionAndModelTraining.ipynb)
 - Application of graph community detection algorithms (e.g., Louvain method) to identify clusters or communities within the graph.
 - Analysis of community structures to uncover insights and patterns related to renewable energy topics.
 - Training machine learning models leveraging graph-based features to predict relationships or classify entities within the renewable energy domain.
 
-##### 3. Graph Analysis [graphAnalysis.py]
+##### 3. Graph Analysis [graphAnalysis.py](NER/graphAnalysis.py)
 - Advanced statistical analysis of the knowledge graph.
 - Calculation of centrality measures (e.g., degree, betweenness, closeness) to identify influential nodes and critical connections.
 - Visualization of analytical results for intuitive interpretation and effective communication of findings.
