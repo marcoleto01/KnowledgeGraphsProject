@@ -18,7 +18,7 @@ This project enables the construction of a *knowledge graph* from PDF documents.
 The project is designed to be adaptable to any topic. In our case, we have chosen the theme of **renewable energy**.
 
 ### Workflow
-##### 1. PDF Conversion [textExtraction.pynb](textExtraction.ipynb)
+##### 1. PDF Conversion [textExtraction.pynb](KnowledgeGraphsProject/Backend/textExtraction.ipynb)
 
 - Use of *pdfplumber* to extract clean text from PDF files.
 - Handling of complex layouts for accurate text extraction.
@@ -28,12 +28,12 @@ The project is designed to be adaptable to any topic. In our case, we have chose
 - Implementation of *spaCy* to identify key entities in the text.
 - Development of custom categories such as energyRenewable to classify domain-specific entities.
 
-##### 3. Relation Extraction [relationExtractor.py](NER/relationExtractor.py)
+##### 3. Relation Extraction [relationExtractor.py](KnowledgeGraphsProject/Backend/relationExtractor.py)
 - Leveraging the *spaCy [en_core_web_trf](https://spacy.io/models/en#en_core_web_trf)* model for syntactic parsing and relationship extraction.
 - Identification of *subjects, **verbs, and **objects* in sentences.
 - Handling of complex sentences, including subordinates and modifiers, for context-rich relationship extraction.
 
-##### 4. Knowledge Graph Construction [graphBuilder.py](NER/graphBuilder.py)
+##### 4. Knowledge Graph Construction [graphBuilder.py](KnowledgeGraphsProject/Backend/graphBuilder.py)
 - Use of *Neo4j* for graph-based representation of extracted data.
 - Conversion of relationships into triples in the form of (subject, verb, object).
 - Standardization and normalization of entities to ensure consistency in the graph.
@@ -44,19 +44,19 @@ The project is designed to be adaptable to any topic. In our case, we have chose
 In this second phase, we focus on further analysis, refinement, and enrichment of the knowledge graph built in Phase 1. The notebooks provided detail critical tasks to ensure quality, usability, and enhanced insights from the graph data.
 
 ### Workflow
-##### 1. Graph Cleaning and Data Creation [GraphCleaningAndDataCreation.ipynb](NER/GraphCleaningAndDataCreation.ipynb)
+##### 1. Graph Cleaning and Data Creation [GraphCleaningAndDataCreation.ipynb](KnowledgeGraphsProject/Backend/GraphCleaningAndDataCreation.ipynb)
 
 - Data cleaning and preprocessing steps to refine the knowledge graph.
 - Resolution of inconsistencies and removal of duplicate entities.
 - Standardization and normalization of entity names and relations.
 - Creation of structured datasets to facilitate advanced analytics.
 
-##### 2. Community Extraction and Model Training [CommunityExtractionAndModelTraining.ipynb](NER/CommunityExtractionAndModelTraining.ipynb)
+##### 2. Community Extraction and Model Training [CommunityExtractionAndModelTraining.ipynb](KnowledgeGraphsProject/Backend/CommunityExtractionAndModelTraining.ipynb)
 - Application of graph community detection algorithms (e.g., Louvain method) to identify clusters or communities within the graph.
 - Analysis of community structures to uncover insights and patterns related to renewable energy topics.
 - Training machine learning models leveraging graph-based features to predict relationships or classify entities within the renewable energy domain.
 
-##### 3. Graph Analysis [graphAnalysis.py](NER/graphAnalysis.py)
+##### 3. Graph Analysis [graphAnalysis.py](KnowledgeGraphsProject/Backend/graphAnalysis.py)
 - Advanced statistical analysis of the knowledge graph.
 - Calculation of centrality measures (e.g., degree, betweenness, closeness) to identify influential nodes and critical connections.
 - Visualization of analytical results for intuitive interpretation and effective communication of findings.
